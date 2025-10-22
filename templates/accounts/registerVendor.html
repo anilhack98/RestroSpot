@@ -11,10 +11,10 @@
 							<div class="user-dashboard loader-holder">
 								<div class="user-holder">
                             <h4 class="text-center" style="margin-bottom: 0;">Khana Spot</h4>
-                            <p class="text-center">Register as Customer</p>
+                            <p class="text-center">Register as Resturant Owner</p>
                             <hr>
                             <div id="restaurant-sets-holder">
-                                <form action="{% url 'registerUser'%}" class="form-fields-set foodbakery-dev-restaurant-form" method="post" action="register-select-package.html">
+                                <form action="{% url 'registerVendor'%}" class="form-fields-set foodbakery-dev-restaurant-form" method="post" enctype="multipart/form-data" action="register-select-package.html">
                                     {% csrf_token %}
                                     <ul class="register-add-restaurant-tab-container restaurant-information-tab-container">
                                         <li>
@@ -33,6 +33,20 @@
                                                                     <div class="field-holder">
                                                                         <label>Last name</label>
                                                                         {{form.last_name}}
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                                                                    <div class="field-holder">
+                                                                        <label>Resturant name</label>
+                                                                        {{v_form.vendor_name}}
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                                                                    <div class="field-holder">
+                                                                        <label>Resturant License</label>
+                                                                        {{v_form.vendor_license}}
                                                                     </div>
                                                                 </div>
                                                                 
