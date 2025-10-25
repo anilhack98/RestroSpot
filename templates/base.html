@@ -30,7 +30,71 @@
 		body, .main-section p, .mce-content-body p{
 			font:Normal  14px/24px "Open Sans", sans-serif;letter-spacing: 0px;text-transform: none;color: #515151 !important;
 		}
+
+		.toast-container {
+  position: fixed;
+  bottom: 20px;       /* 👈 bottom */
+  right: 20px;        /* 👈 right corner */
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.toast-message {
+  min-width: 250px;
+  background-color: #4caf50; 
+  color: white;
+  padding: 12px 18px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  animation: slideInRight 0.5s ease forwards;
+  font-weight: 500;
+}
+
+.alert-success {
+  background-color: #28a745;
+}
+.alert-error, .alert-danger {
+  background-color: #dc3545;
+}
+.alert-warning {
+  background-color: #ffc107;
+  color: #000;
+}
+.alert-info {
+  background-color: #17a2b8;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.fade-out {
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
 	</style>
+
+	<script>
+  setTimeout(() => {
+    const toasts = document.querySelectorAll('.toast-message');
+    toasts.forEach(toast => {
+      toast.classList.add('fade-out');
+      setTimeout(() => toast.remove(), 600);
+    });
+  }, 4000);
+</script>
+
 </head>
 
 <body>
@@ -42,5 +106,7 @@
 {% block content %}
 {% endblock %}
 
+
 <!-- Footer -->
 {% include 'includes/footer.html' %}
+
