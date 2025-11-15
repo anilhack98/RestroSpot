@@ -1,0 +1,8 @@
+{% autoescape off %}
+Hi {{ user.first_name }}
+
+Please click on below link to activate your account
+http://{{domain}}{% url 'reset_password' uidb64=uid token=token %}
+Activate your account
+
+{% endautoescape %}

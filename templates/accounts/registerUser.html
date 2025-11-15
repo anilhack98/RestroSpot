@@ -14,7 +14,7 @@
                             <p class="text-center">Register as Customer</p>
                             <hr>
                             <div id="restaurant-sets-holder">
-                                <form action="{% url 'registerUser'%}" class="form-fields-set foodbakery-dev-restaurant-form" method="post" action="register-select-package.html">
+                                <form action="{% url 'registerUser'%}" class="form-fields-set foodbakery-dev-restaurant-form" method="POST">
                                     {% csrf_token %}
                                     <ul class="register-add-restaurant-tab-container restaurant-information-tab-container">
                                         <li>
