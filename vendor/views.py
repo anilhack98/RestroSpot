@@ -152,6 +152,9 @@ def add_food(request):
 
     else:
         form = FoodItemForm()
+        #modify this form
+        form.fields['category'].queryset=Category.objects.filter(vendor=get_vendor(request))
+
 
     return render(request, 'vendor/add_food.html', {'form': form})
 
@@ -176,6 +179,7 @@ def edit_food(request,pk=None):
                 form.add_error('food_title', 'FoodItem already exists!')
     else:
         form = FoodItemForm(instance=food)
+        form.fields['category'].queryset=Category.objects.filter(vendor=get_vendor(request))
 
     context = {
         'form': form,
