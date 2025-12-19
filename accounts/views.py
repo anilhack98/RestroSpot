@@ -52,6 +52,10 @@ def registerUser(request):
             user.role = User.CUSTOMER
             user.save()
 
+            profile = UserProfile.objects.get(user=user)
+            profile.address = form.cleaned_data['address']
+            profile.save()
+
             # Send Email Verification
             #send_verification_email(request,user)
             
@@ -66,52 +70,53 @@ def registerUser(request):
 
 def registerVendor(request):
     if request.user.is_authenticated:
-        messages.warning(request,'You are already logged in.')
+        messages.warning(request, 'You are already logged in.')
         return redirect('myAccount')
-    elif request.method == 'POST':
+
+    if request.method == 'POST':
         form = UserForm(request.POST)
         v_form = VendorForm(request.POST, request.FILES)
-        if form.is_valid() and v_form.is_valid():
-            first_name = form.cleaned_data['first_name']
-            last_name = form.cleaned_data['last_name']
-            username = form.cleaned_data['username']
-            email = form.cleaned_data['email']
-            password = form.cleaned_data['password']
 
+        if form.is_valid() and v_form.is_valid():
             user = User.objects.create_user(
-                first_name=first_name,
-                last_name=last_name,
-                username=username,
-                email=email,
-                password=password
+                first_name=form.cleaned_data['first_name'],
+                last_name=form.cleaned_data['last_name'],
+                username=form.cleaned_data['username'],
+                email=form.cleaned_data['email'],
+                password=form.cleaned_data['password']
             )
-            # user.is_active = True  # For vendor Verification
             user.role = User.VENDOR
             user.save()
 
             vendor = v_form.save(commit=False)
-            vendor.user = user  # ✅ assign newly created user
-            user_profile = UserProfile.objects.get(user=user)
+            vendor.user = user
+
+            # ✅ SAFELY get or create profile
+            user_profile, created = UserProfile.objects.get_or_create(user=user)
             vendor.user_profile = user_profile
+
             vendor.save()
 
-            # send Verification email
-            # send_verification_email(request,user)
-            
-            messages.success(request, 'Your account has been registered successfully! Please wait for approval.')
-            return redirect('registerVendor')
+            messages.success(
+                request,
+                'Your account has been registered successfully! Please wait for approval.'
+            )
+            return redirect('login')
+
         else:
             print('Invalid Form')
-            print(form.errors)
+            print('UserForm Errors:', form.errors)
+            print('VendorForm Errors:', v_form.errors)
+
     else:
         form = UserForm()
         v_form = VendorForm()
 
-    context = {
+    return render(request, 'accounts/registerVendor.html', {
         'form': form,
         'v_form': v_form,
-    }
-    return render(request, 'accounts/registerVendor.html', context)
+    })
+
 
 # def activate(request,uidb64,token):
 #     # Activate the user by setting the is_activate status to True
