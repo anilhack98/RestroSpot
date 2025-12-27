@@ -13,7 +13,7 @@ from django.core.exceptions import PermissionDenied
 
 from vendor.models import Vendor
 
-
+from django .template.defaultfilters import slugify
 # Restrict Vendor from accessing the customer page
 def check_role_vendor(user):
     if user.role==1:
@@ -90,6 +90,8 @@ def registerVendor(request):
 
             vendor = v_form.save(commit=False)
             vendor.user = user
+            vendor_name=v_form.cleaned_data['vendor_name']
+            vendor.vendor_slug=slugify(vendor_name)+'-'+str(user.id)
 
             # ✅ SAFELY get or create profile
             user_profile, created = UserProfile.objects.get_or_create(user=user)
