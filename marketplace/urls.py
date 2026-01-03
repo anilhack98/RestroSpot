@@ -9,4 +9,8 @@ urlpatterns=[
 
      #Add to Cart
      path('add_to_cart/<int:food_id>/',views.add_to_cart,name='add_to_cart'),
+
+     # Decrease Cart
+      path('decrease_cart/<int:food_id>/', views.decrease_cart, name='decrease_cart'),
+
 ]
