@@ -14,26 +14,31 @@ from django.core.exceptions import PermissionDenied
 from vendor.models import Vendor
 
 from django .template.defaultfilters import slugify
+
+
 # Restrict Vendor from accessing the customer page
 def check_role_vendor(user):
-    if user.role==1:
+    if user.role==1:   # Vendor role
         return True
     else:
         raise PermissionDenied
     
 # Restrict customer from accessing the vendor page
 def check_role_customer(user):
-    if user.role==2:
+    if user.role==2:  # Customer role
         return True
     else:
         raise PermissionDenied
 
 def registerUser(request):
+    # Prevent logged-in users from registering again
     if request.user.is_authenticated:
         messages.warning(request,'You are already logged in.')
         return redirect('myAccount')
     elif request.method == 'POST':
         form = UserForm(request.POST)
+
+        # Validate form input
         if form.is_valid():
             first_name = form.cleaned_data['first_name']
             last_name = form.cleaned_data['last_name']
@@ -41,6 +46,7 @@ def registerUser(request):
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']
 
+            # Create a new user
             user = User.objects.create_user(
                 first_name=first_name,
                 last_name=last_name,
@@ -48,10 +54,12 @@ def registerUser(request):
                 email=email,
                 password=password
             )
+            # Activate user and assign customer role
             user.is_active = True
             user.role = User.CUSTOMER
             user.save()
 
+            # Update user profile address
             profile = UserProfile.objects.get(user=user)
             profile.address = form.cleaned_data['address']
             profile.save()
@@ -69,6 +77,7 @@ def registerUser(request):
 
 
 def registerVendor(request):
+    # Prevent logged-in users from registering again
     if request.user.is_authenticated:
         messages.warning(request, 'You are already logged in.')
         return redirect('myAccount')
@@ -77,7 +86,9 @@ def registerVendor(request):
         form = UserForm(request.POST)
         v_form = VendorForm(request.POST, request.FILES)
 
+        # Validate both user and vendor forms
         if form.is_valid() and v_form.is_valid():
+            # Create vendor user
             user = User.objects.create_user(
                 first_name=form.cleaned_data['first_name'],
                 last_name=form.cleaned_data['last_name'],
@@ -88,8 +99,10 @@ def registerVendor(request):
             user.role = User.VENDOR
             user.save()
 
+            # Create vendor profile
             vendor = v_form.save(commit=False)
             vendor.user = user
+            # Generate unique vendor slug
             vendor_name=v_form.cleaned_data['vendor_name']
             vendor.vendor_slug=slugify(vendor_name)+'-'+str(user.id)
 
@@ -104,7 +117,7 @@ def registerVendor(request):
                 'Your account has been registered successfully! Please wait for approval.'
             )
             return redirect('login')
-
+         # Print form errors for debugging
         else:
             print('Invalid Form')
             print('UserForm Errors:', form.errors)
@@ -144,6 +157,7 @@ def login(request):
         email=request.POST['email']
         password=request.POST['password']
 
+        # Authenticate user
         user=auth.authenticate(email=email,password=password)
 
         if user is not None:

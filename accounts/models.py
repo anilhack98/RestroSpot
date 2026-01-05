@@ -9,15 +9,19 @@ class UserManager(BaseUserManager):
             raise ValueError("User must have an email address")
         if not username:
             raise ValueError("User must have an username")
+        
+        # Creates a new user object with provided details
         user=self.model(
             email=self.normalize_email(email),
             username=username,
             first_name=first_name,
             last_name=last_name,
         )
-        user.set_password(password)
-        user.save(using=self._db)
+        user.set_password(password)  # Encrypts the password (important for security)
+        user.save(using=self._db)     # Saves user to database and returns it
         return user
+    
+    # Method to create a super admin user
     def create_superuser(self,first_name,last_name,username,email,password=None):
         user=self.create_user(
             email=self.normalize_email(email),
@@ -26,14 +30,15 @@ class UserManager(BaseUserManager):
             first_name=first_name,
             last_name=last_name,
         )
-        user.is_admin = True
+        user.is_admin = True   # Gives admin permissions
         user.is_active=True
         user.is_staff=True
         user.is_superAdmin=True
-        user.save(using=self._db)
+        user.save(using=self._db)  # Saves superuser to database
         return user
 
 
+# Custom User model replacing Django’s default User
 class User(AbstractBaseUser):
     VENDOR=1
     CUSTOMER=2
@@ -50,11 +55,12 @@ class User(AbstractBaseUser):
     role=models.PositiveSmallIntegerField(choices=ROLE_CHOICE,blank=True,null=True)
 
     # Required fields
+    # Tracks user activity and timestamps
     date_joined=models.DateTimeField(auto_now_add=True)
     last_login=models.DateTimeField(auto_now_add=True)
     created_date=models.DateTimeField(auto_now_add=True)
     modified_date=models.DateTimeField(auto_now=True)
-    is_admin=models.BooleanField(default=False)
+    is_admin=models.BooleanField(default=False)   # Controls access and permissions
     is_staff=models.BooleanField(default=False)
     is_active=models.BooleanField(default=False)
     is_superAdmin=models.BooleanField(default=False)
@@ -64,12 +70,15 @@ class User(AbstractBaseUser):
 
     objects=UserManager()
 
+    # Displays email in admin panel
     def __str__(self):
         return self.email
     
+     # Permission check
     def has_perm(self,perm,obj=None):
         return self.is_admin
     
+    # Allows access to all apps
     def has_module_perms(self,app_label):
         return True 
     

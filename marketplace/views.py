@@ -1,25 +1,32 @@
-from django.shortcuts import get_object_or_404,render
-from menu.models import Category
-from vendor .models import Vendor
-from django.db.models import Prefetch
-from menu.models import Category, FoodItem
-from django.http import HttpResponse, JsonResponse
-from .models import Cart
-from .context_processors import get_cart_counter
+from django.shortcuts import get_object_or_404,render  # For rendering templates and fetching objects or returning 404
+from menu.models import Category  # Import food categories and items
+from vendor .models import Vendor  # Import Vendor model
+from django.db.models import Prefetch  # For optimizing queries with prefetch_related
+from menu.models import Category, FoodItem  # Import food categories and items
+from django.http import HttpResponse, JsonResponse  # For returning HTTP and JSON responses
+from .models import Cart     # Import Cart model
+from .context_processors import get_cart_counter    # Import function to get total cart items
+from django.contrib.auth.decorators import login_required   # For login-required views
 
+
+# Marketplace page: list all approved vendor
 def marketplace(request):
+    # Get all approved vendors whose user accounts are active
     vendors=Vendor.objects.filter(is_approved=True,user__is_active=True)
-    vendor_count=vendors.count()
+    vendor_count=vendors.count()   # Count total vendors
 
     context={
-        'vendors':vendors,
-        'vendor_count':vendor_count,
+        'vendors':vendors,  # Pass vendor list to template
+        'vendor_count':vendor_count,  # Pass vendor count to template
     }
     return render(request,'marketplace/listings.html',context)
 
+# Vendor detail page: show vendor and their available food item
 def vendor_detail(request,vendor_slug):
+    # Get vendor by slug or return 404 if not found
     vendor=get_object_or_404(Vendor,vendor_slug=vendor_slug)
 
+    # Get categories for this vendor and prefetch their available food items
     categories=Category.objects.filter(vendor=vendor).prefetch_related(
         Prefetch(
             'fooditems',
@@ -27,6 +34,7 @@ def vendor_detail(request,vendor_slug):
         )
     )
 
+    # Get cart items for logged-in user
     if request.user.is_authenticated:
         cart_items=Cart.objects.filter(user=request.user)
     else:
@@ -38,20 +46,22 @@ def vendor_detail(request,vendor_slug):
     }
     return render(request,'marketplace/vendor_detail.html',context)
 
+# Add food item to cart via AJAX
 def add_to_cart(request,food_id):
-    if request.user.is_authenticated:
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+    if request.user.is_authenticated:  # User must be logged in
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest': # Check AJAX request
             # Check if the food item exists
             try:
-                fooditem=FoodItem.objects.get(id=food_id)
+                fooditem=FoodItem.objects.get(id=food_id)   # Get the food item
                 # Check if the user has already added that food to the cart
                 try:
                     chkCart=Cart.objects.get(user=request.user,fooditem=fooditem)
                     # Increase the cart quantity
-                    chkCart.quantity += 1
+                    chkCart.quantity += 1 # Increase quantity
                     chkCart.save()
                     return JsonResponse({'status':'success','message':'Increased cart Quantity','cart_counter':get_cart_counter(request),'qty':chkCart.quantity})
                 except:
+                    # If item not in cart, create new cart entry
                     chkCart=Cart.objects.create(user=request.user,fooditem=fooditem,quantity=1)
                     return JsonResponse({'status':'success','message':'Added the food to cart','cart_counter':get_cart_counter(request),'qty':chkCart.quantity})
             except:
@@ -61,7 +71,7 @@ def add_to_cart(request,food_id):
     else:
         return HttpResponse({'status':'login_required','message':'please login to continue'})
     
-
+# Decrease quantity of cart item via AJAX
 def decrease_cart(request,food_id):
     if request.user.is_authenticated:
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
@@ -76,7 +86,7 @@ def decrease_cart(request,food_id):
                         chkCart.quantity -= 1
                         chkCart.save()
                     else:
-                        chkCart.delete()
+                        chkCart.delete()  # Remove from cart if quantity becomes 0
                         chkCart.quantity=0
                     return JsonResponse({'status':'success','cart_counter':get_cart_counter(request),'qty':chkCart.quantity})
                 except:
@@ -87,7 +97,27 @@ def decrease_cart(request,food_id):
             return JsonResponse({'status':'Failed','message':'Invalid request'})
     else:
         return HttpResponse({'status':'login_required','message':'please login to continue'})
-    
 
+# 5️⃣ Display the cart page for logged-in users
+@login_required(login_url='login')
 def cart(request):
-    return render(request,'marketplace/cart.html')
+    cart_items=Cart.objects.filter(user=request.user)  # Get all cart items for user
+    context={
+        'cart_items':cart_items,
+    }
+    return render(request,'marketplace/cart.html',context)
+
+# 6️⃣ Delete a cart item via AJAX
+def delete_cart(request,cart_id):
+    if request.user.is_authenticated:
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            try:
+                # Check if the cart item exist
+                cart_item=Cart.objects.get(user=request.user,id=cart_id)
+                if cart_item:
+                    cart_item.delete()
+                    return JsonResponse({'status':'success','messaage':'cart item has been deleted!','cart_counter':get_cart_counter(request)})
+            except:
+                return JsonResponse({'status':'Failed','message':'Cart Item does not exist!'})
+        else:
+            return JsonResponse({'status':'Failed','message':'Invalid request!'})
