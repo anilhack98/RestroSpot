@@ -138,6 +138,12 @@ $(document).ready(function(){
                     $('#cart_counter').html(response.cart_counter['cart_count'])
                     $('#qty-'+food_id).html(response.qty);
 
+                    applyCartAmounts(
+                        response.cart_amounts['subtotal'],
+                        response.cart_amounts['tax'],
+                        response.cart_amounts['grand_total']
+                    )
+
                     if(window.location.pathname == '/cart/'){
                         // Remove the cart item automatically if qty is decreased to 0
                     removeCartItem(response.qty, cart_id);
@@ -168,6 +174,12 @@ $(document).ready(function(){
                 }else{
                     $('#cart_counter').html(response.cart_counter['cart_count']);
                     swal(response.status,response.message,'success')
+
+                    applyCartAmounts(
+                        response.cart_amounts['subtotal'],
+                        response.cart_amounts['tax'],
+                        response.cart_amounts['grand_total']
+                    ) 
 
                     removeCartItem(0,cart_id)
                     checkEmptyCart();
