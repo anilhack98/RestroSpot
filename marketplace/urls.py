@@ -17,7 +17,7 @@ urlpatterns=[
      path('add_to_cart/<int:food_id>/',views.add_to_cart,name='add_to_cart'),
 
      # URL to decrease the quantity of a food item in the cart
-    # Example: /decrease_cart/5/ decreases quantity of food item with ID 5
+    # Example: /decrease_cart/5/ decreases quantity of food item with ID 5 
       path('decrease_cart/<int:food_id>/', views.decrease_cart, name='decrease_cart'),
 
       # URL to delete a specific cart item

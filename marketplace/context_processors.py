@@ -18,3 +18,17 @@ def get_cart_counter(request):
         except:
             cart_count=0    # In case of any error, set cart count to 0
     return dict(cart_count=cart_count)    # Return the cart count as a dictionary
+
+# Made function of get_cart_amounts with variable 0
+def get_cart_amounts(request):
+    subtotal=0
+    tax=0
+    grand_total=0
+    if request.user.is_authenticated:  # Check User Authentication
+        cart_items=Cart.objects.filter(user=request.user)  # get the cart item of logged in user
+        for item in cart_items:  # looping through all cart item
+            fooditem=FoodItem.objects.get(pk=item.fooditem.id)  # Getting the fooditem with their PK
+            subtotal += (fooditem.price * item.quantity)  #subtotal=subtotal + (fooditem.price * item.quantity)
+
+        grand_total=subtotal + tax
+    return dict(subtotal=subtotal,tax=tax,grand_total=grand_total)
