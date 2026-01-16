@@ -7,12 +7,14 @@ from django.http import HttpResponse, JsonResponse  # For returning HTTP and JSO
 from .models import Cart     # Import Cart model
 from .context_processors import get_cart_counter,get_cart_amounts    # Import function to get total cart items
 from django.contrib.auth.decorators import login_required   # For login-required views
+from django.db.models import Q
 
 
 # Marketplace page: list all approved vendor
 def marketplace(request):
     # Get all approved vendors whose user accounts are active
     vendors=Vendor.objects.filter(is_approved=True,user__is_active=True)
+    vendors=Vendor.objects.filter(user__is_active=True)
     vendor_count=vendors.count()   # Count total vendors
 
     context={
@@ -121,3 +123,39 @@ def delete_cart(request,cart_id):
                 return JsonResponse({'status':'Failed','message':'Cart Item does not exist!'})
         else:
             return JsonResponse({'status':'Failed','message':'Invalid request!'})
+
+
+def search(request):
+    # Get search parameters safely with defaults
+    keyword = request.GET.get('keyword', '')
+    address = request.GET.get('address', '')
+    latitude = request.GET.get('lat', '')
+    longitude = request.GET.get('lng', '')
+    
+    print(f'Searching for: keyword="{keyword}", address="{address}", lat="{latitude}", lng="{longitude}"')
+    
+    # Filter vendors by restaurant name if keyword provided
+    if keyword:
+        # Get vendors that have food items matching the keyword
+        vendors_with_matching_food = FoodItem.objects.filter(
+            food_title__icontains=keyword,
+            is_available=True
+        ).values_list('vendor', flat=True)
+        
+        # Q is used to build complex database queries
+        # Search vendors by name OR vendors that have matching food items
+        vendors = Vendor.objects.filter(
+            Q(id__in=vendors_with_matching_food) | 
+            Q(vendor_name__icontains=keyword),
+            is_approved=True,
+            user__is_active=True
+        ).distinct()
+    else:
+        vendors = Vendor.objects.filter(is_approved=True, user__is_active=True)
+    
+    vendor_count = vendors.count()
+    context = {
+        'vendors': vendors,
+        'vendor_count': vendor_count,
+    }
+    return render(request, 'marketplace/listings.html', context) 

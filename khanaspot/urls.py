@@ -20,4 +20,7 @@ urlpatterns = [
     # Cart page URL
     # This maps directly to the cart view inside marketplace app
       path('cart/',MarketplaceViews.cart,name='cart'),
+
+      # Search Path
+      path('search/',MarketplaceViews.search,name='search'),
 ] + static(settings.MEDIA_URL,document_root=settings.MEDIA_ROOT)

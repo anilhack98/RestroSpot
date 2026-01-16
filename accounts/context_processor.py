@@ -1,6 +1,7 @@
 from vendor.models import Vendor  # Import Vendor model from vendor app
 from accounts.models import User  
 # Import User model from accounts app
+from django.conf import settings
 
 
 # This function is a CONTEXT PROCESSOR
@@ -12,3 +13,5 @@ def get_vendor(request):
         vendor=None
     return dict(vendor=vendor)
 
+def get_google_api(request):
+    return {'GOOGLE_API_KEY':settings.GOOGLE_API_KEY} 

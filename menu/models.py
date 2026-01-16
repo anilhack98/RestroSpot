@@ -4,7 +4,7 @@ from vendor.models import Vendor  # Import Vendor model
 # 1️⃣ Category model: represents a category of food under a vendor
 class Category(models.Model):
     vendor=models.ForeignKey(Vendor,on_delete=models.CASCADE) # Each category belongs to a vendor; deleting vendor deletes categories
-    category_name=models.CharField(max_length=50,unique=True)  # Name of category, must be unique
+    category_name=models.CharField(max_length=50)  # Name of category, must be unique
     slug=models.SlugField(max_length=100,unique=True) # URL-friendly version of the category name
     description=models.TextField(max_length=250,blank=True)  # Optional description
     created_at=models.DateTimeField(auto_now_add=True)  # Timestamp when created
@@ -34,6 +34,12 @@ class FoodItem(models.Model):
     is_available=models.BooleanField(default=True)
     created_at=models.DateTimeField(auto_now_add=True)
     updated_at=models.DateTimeField(auto_now=True)
+
+    def clean(self):
+        # Validate that price is not negative
+        if self.price is not None and self.price < 0:
+            from django.core.exceptions import ValidationError
+            raise ValidationError({'price': 'Price cannot be negative.'})
     
     def __str__(self):
         return self.food_title

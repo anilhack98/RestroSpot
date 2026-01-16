@@ -14,3 +14,4 @@ class Cart(models.Model):
     # Function to represent the object as a string
     def __unicode__(self):
         return self.user  # Returns the user associated with this cart item
+ 

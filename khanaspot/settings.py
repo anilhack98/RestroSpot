@@ -50,6 +50,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'accounts.context_processor.get_vendor',
+                'accounts.context_processor.get_google_api',
                 'marketplace.context_processors.get_cart_counter',
                 'marketplace.context_processors.get_cart_amounts',
             ],
@@ -122,6 +123,8 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL='Khanaspot <django.eamieechaudhary11@gmail.com>'
+
+GOOGLE_API_KEY='AIzaSyAMdvlmlhQVVqCT8TbKjznN91HGNGE5Nhs'
 
 print("EMAIL_HOST:", EMAIL_HOST)
 print("EMAIL_PORT:", EMAIL_PORT)

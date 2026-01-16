@@ -107,9 +107,10 @@ def add_category(request):
              # Don't save yet, assign vendor first
             category = form.save(commit=False)
             category.vendor = vendor
-            # Create URL-friendly slug
-            category.slug = slugify(category.category_name)
             try:
+                category.save()  #here the category id will be generated
+                # Create URL-friendly slug
+                category.slug = slugify(category.category_name)+'-'+str(category.id)
                 category.save()
                 messages.success(request, "Category added successfully!")
                 return redirect('menu_builder')
