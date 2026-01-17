@@ -30,15 +30,15 @@ def get_cart_amounts(request):
         for item in cart_items:  # looping through all cart item
             fooditem=FoodItem.objects.get(pk=item.fooditem.id)  # Getting the fooditem with their PK
             subtotal += (fooditem.price * item.quantity)  #subtotal=subtotal + (fooditem.price * item.quantity)
+        
+        get_tax=Tax.objects.filter(is_active=True)
+        for i in get_tax:
+            tax_type=i.tax_type
+            tax_percentage=i.tax_percentage
+            tax_amount=round((tax_percentage*subtotal)/100,2)
+            tax_dict.update({tax_type:{str(tax_percentage):tax_amount}})
 
-            get_tax=Tax.objects.filter(is_active=True)
-            for i in get_tax:
-                tax_type=i.tax_type
-                tax_percentage=i.tax_percentage
-                tax_amount=round((tax_percentage*subtotal)/100,2)
-                tax_dict.update({tax_type:{str(tax_percentage):tax_amount}})
+        tax=sum(x for key in tax_dict.values() for x in key.values())
 
-            tax=sum(x for key in tax_dict.values() for x in key.values())
-
-            grand_total=subtotal + tax
+        grand_total=subtotal + tax
     return dict(subtotal=subtotal,tax=tax,grand_total=grand_total,tax_dict=tax_dict) 
