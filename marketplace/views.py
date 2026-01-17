@@ -79,7 +79,8 @@ def add_to_cart(request,food_id):
                     # If item not in cart, create new cart entry
                     chkCart=Cart.objects.create(user=request.user,fooditem=fooditem,quantity=1)
                     return JsonResponse({'status':'success','message':'Added the food to cart','cart_counter':get_cart_counter(request),'qty':chkCart.quantity,'cart_amount':get_cart_amounts(request)})
-            except:
+            except Exception as e:
+                print(e)
                 return JsonResponse({'status':'Failed','message':'This food does not exist!'})
         else:
             return JsonResponse({'status':'Failed','message':'Invalid request'})

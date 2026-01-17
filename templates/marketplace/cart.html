@@ -85,12 +85,18 @@
                                                                 <span id="subtotal">{{subtotal}}</span>
                                                             </span>
                                                         </li>
-                                                          <li style="list-style-type: none;">Tax
+
+                                                        {% for key,value in tax_dict.items %}
+                                                            {% for i,j in value.items %}
+                                                          <li style="list-style-type: none;">{{key}}
                                                             <span class="price float-right">
                                                                 <span class="currency">Rs.</span>
-                                                                <span id="tax">{{tax}}</span>
+                                                                <span id="tax-{{key}}">{{i}}</span>
                                                             </span>
                                                         </li>
+                                                            {% endfor %}
+                                                        {% endfor %}
+                                                        
                                                         <li style="list-style-type: none; font-weight: 600;">TOTAL
                                                             <span class="price float-right">
                                                                 <span class="currency">Rs.</span>

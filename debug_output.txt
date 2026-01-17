@@ -1,0 +1,32 @@
+DEBUG: Current Date: 2026-01-17
+DEBUG: Current Day (Weekday): 6
+DEBUG: Current Time: 19:11:16
+
+Checking Vendor: Chimney Resturant
+Found 0 opening hours for today.
+Final is_open Status: None
+
+Checking Vendor: Walnut Bistro
+Found 0 opening hours for today.
+Final is_open Status: None
+
+Checking Vendor: KhanaSpot
+Found 0 opening hours for today.
+Final is_open Status: None
+
+Checking Vendor: vendor
+Found 1 opening hours for today.
+  - Slot: 05:30 PM to 10:00 PM (Closed: False)
+    -> Parsed Start: 17:30:00, End: 22:00:00
+    -> MATCH! Vendor is OPEN.
+Final is_open Status: True
+
+Checking Vendor: Jimbu Thakali
+Found 0 opening hours for today.
+Final is_open Status: None
+
+Checking Vendor: Bagaicha
+Found 1 opening hours for today.
+  - Slot:  to 08:00 PM (Closed: True)
+    -> Skipping empty hours
+Final is_open Status: None
