@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404,render  # For rendering templates and fetching objects or returning 404
 from menu.models import Category  # Import food categories and items
-from vendor .models import Vendor  # Import Vendor model
+from vendor.models import Vendor,OpeningHour  # Import Vendor model
 from django.db.models import Prefetch  # For optimizing queries with prefetch_related
 from menu.models import Category, FoodItem  # Import food categories and items
 from django.http import HttpResponse, JsonResponse  # For returning HTTP and JSON responses
@@ -9,12 +9,14 @@ from .context_processors import get_cart_counter,get_cart_amounts    # Import fu
 from django.contrib.auth.decorators import login_required   # For login-required views
 from django.db.models import Q
 
+from datetime import date,datetime
+
 
 # Marketplace page: list all approved vendor
 def marketplace(request):
     # Get all approved vendors whose user accounts are active
     vendors=Vendor.objects.filter(is_approved=True,user__is_active=True)
-    vendors=Vendor.objects.filter(user__is_active=True)
+    # vendors=Vendor.objects.filter(user__is_active=True)
     vendor_count=vendors.count()   # Count total vendors
 
     context={
@@ -36,6 +38,15 @@ def vendor_detail(request,vendor_slug):
         )
     )
 
+    opening_hours=OpeningHour.objects.filter(vendor=vendor).order_by('day','-from_hour')
+
+    # Check current day's opening Hour
+    today_date=date.today()
+    today=today_date.isoweekday()
+
+    current_opening_hours=OpeningHour.objects.filter(vendor=vendor,day=today)
+
+
     # Get cart items for logged-in user
     if request.user.is_authenticated:
         cart_items=Cart.objects.filter(user=request.user)
@@ -45,6 +56,8 @@ def vendor_detail(request,vendor_slug):
         'vendor':vendor,
         'categories':categories,
         'cart_items':cart_items,
+        'opening_hours':opening_hours,
+        'current_opening_hours':current_opening_hours,
     }
     return render(request,'marketplace/vendor_detail.html',context)
 

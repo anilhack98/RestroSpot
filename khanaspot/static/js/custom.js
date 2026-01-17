@@ -197,5 +197,51 @@ $(document).ready(function(){
         }
     }
 
+    $('.add_hour').on('click',function(e){
+        e.preventDefault();
+        var day=document.getElementById('id_day').value
+        var from_hour=document.getElementById('id_from_hour').value
+        var to_hour=document.getElementById('id_to_hour').value
+        var is_closed=document.getElementById('id_is_closed').checked
+        var csrf_token=$('input[name=csrfmiddlewaretoken]').val() // In Jquery if we want to take value we need to use Val function
+        var url=document.getElementById('add_hour_url').value
+
+        console.log(day,from_hour,to_hour,is_closed,csrf_token)
+
+        if(is_closed){
+            is_closed='True'
+            condition="day != ''"
+        }else{
+            is_closed='False'
+            condition="day != '' && from_hour != '' && to_hour != ''"
+        }
+
+        if(eval(condition)){
+            $.ajax({
+                type:'POST',
+                url:url,
+                data:{
+                    'day':day,
+                    'from_hour':from_hour,
+                    'to_hour':to_hour,
+                    'is_closed':is_closed,
+                    'csrfmiddlewaretoken':csrf_token,
+                },
+                success:function(response){
+                    if(response.status=='success'){
+                        html='<tr><td><b>'+response.day+'</b></td><td>'+ response.from_hour+'-'+ response.to_hour+'</td><td><a href="#">Remove</a></td></tr>';
+                        $(".opening_hours").append(html)
+                        document.getElementById("opening_hours").reset()
+                    }else{
+                        swal(response.message,'',"error")
+                    }
+                }
+            })
+        }else{
+            swal('Please fill all fields','','info')
+        }
+    })
+    // Documentary ready close
+
 
 });

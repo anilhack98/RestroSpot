@@ -9,14 +9,14 @@ autocomplete = new google.maps.places.Autocomplete(
         //default in this app is "IN" - add your country code
         componentRestrictions: {'country': ['in']},
     })
-// function to specify what should happen when the prediction is clicked
+// function to specify what should happen when prediction is clicked
 autocomplete.addListener('place_changed', onPlaceChanged);
 }
 
 function onPlaceChanged (){
     var place = autocomplete.getPlace();
 
-    // User did not select the prediction. Reset the input field or alert()
+    // User did not select prediction. Reset the input field or alert()
     if (!place.geometry){
         document.getElementById('id_address').placeholder = "Start typing...";
     }
@@ -24,7 +24,7 @@ function onPlaceChanged (){
         // console.log('place name=>', place.name)
     }
 
-    // get the address components and assign them to the fields
+    // get address components and assign them to the fields
     // console.log(place);
     var geocoder = new google.maps.Geocoder()
     var address = document.getElementById('id_address').value
@@ -49,19 +49,19 @@ function onPlaceChanged (){
     console.log(place.address_components);
     for(var i=0; i<place.address_components.length; i++){
         for(var j=0; j<place.address_components[i].types.length; j++){
-            // get country
+            // get the country
             if(place.address_components[i].types[j] == 'country'){
                 $('#id_country').val(place.address_components[i].long_name);
             }
-            // get state
+            // get the state
             if(place.address_components[i].types[j] == 'administrative_area_level_1'){
                 $('#id_state').val(place.address_components[i].long_name);
             }
-            // get city
+            // get the city
             if(place.address_components[i].types[j] == 'locality'){
                 $('#id_city').val(place.address_components[i].long_name);
             }
-            // get pincode
+            // get the pincode
             if(place.address_components[i].types[j] == 'postal_code'){
                 $('#id_pin_code').val(place.address_components[i].long_name);
             }else{
@@ -195,7 +195,7 @@ $(document).ready(function(){
     })
 
 
-    // delete the cart element if the qty is 0
+    // delete the cart element if qty is 0
     function removeCartItem(cartItemQty, cart_id){
             if(cartItemQty <= 0){
                 // remove the cart item element
@@ -204,7 +204,7 @@ $(document).ready(function(){
         
     }
 
-    // Check if the cart is empty
+    // Check if cart is empty
     function checkEmptyCart(){
         var cart_counter = document.getElementById('cart_counter').innerHTML
         if(cart_counter == 0){
@@ -213,7 +213,7 @@ $(document).ready(function(){
     }
 
 
-    // apply cart amounts
+    // apply the cart amounts
     function applyCartAmounts(subtotal, tax_dict, grand_total){
         if(window.location.pathname == '/cart/'){
             $('#subtotal').html(subtotal)
@@ -240,7 +240,7 @@ $(document).ready(function(){
         var csrf_token = $('input[name=csrfmiddlewaretoken]').val()
         var url = document.getElementById('add_hour_url').value
 
-        console.log(day, from_hour, to_hour, is_closed, csrf_token)
+        console.log('Add hour clicked:', day, from_hour, to_hour, is_closed, csrf_token, url)
 
         if(is_closed){
             is_closed = 'True'
@@ -269,8 +269,8 @@ $(document).ready(function(){
                             html = '<tr id="hour-'+response.id+'"><td><b>'+response.day+'</b></td><td>'+response.from_hour+' - '+response.to_hour+'</td><td><a href="#" class="remove_hour" data-url="/vendor/opening-hours/remove/'+response.id+'/">Remove</a></td></tr>';
                         }
                         
-                        $(".opening_hours").append(html)
-                        document.getElementById("opening_hours").reset();
+                        $(".opening_hours tbody").append(html)
+                        document.getElementById("opening_hour").reset();
                     }else{
                         swal(response.message, '', "error")
                     }

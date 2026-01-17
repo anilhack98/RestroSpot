@@ -1,5 +1,5 @@
 from django import forms  # Import Django forms module
-from .models import Vendor  # Import Vendor model
+from .models import Vendor,OpeningHour  # Import Vendor model
 from accounts.validators import allow_only_images_validator   # Custom validator to allow only image files
 
 # Form to create or update a Vendor
@@ -9,3 +9,8 @@ class VendorForm(forms.ModelForm):
     class Meta:
         model=Vendor
         fields=['vendor_name','vendor_license']
+
+class OpeningHourForm(forms.ModelForm):
+    class Meta:
+        model=OpeningHour
+        fields=['day','from_hour','to_hour','is_closed']
