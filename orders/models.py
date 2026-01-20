@@ -38,7 +38,7 @@ class Order(models.Model):
     city=models.CharField(max_length=50)
     pin_code=models.CharField(max_length=10)
     total=models.FloatField()
-    tax_date=models.JSONField(blank=True,help_text="Data format:{'tax_type':{'tax_percentage':'tax_amount'}}")
+    tax_data=models.JSONField(blank=True,help_text="Data format:{'tax_type':{'tax_percentage':'tax_amount'}}")
     total_tax=models.FloatField()
     payment_method=models.CharField(max_length=25)
     status=models.CharField(max_length=15,choices=STATUS, default='New')

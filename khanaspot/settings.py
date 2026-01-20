@@ -55,7 +55,8 @@ TEMPLATES = [
                 'accounts.context_processor.get_google_api',
                 'marketplace.context_processors.get_cart_counter',
                 'marketplace.context_processors.get_cart_amounts',
-                'accounts.context_processor.get_user_profile'
+                'accounts.context_processor.get_user_profile',
+                'accounts.context_processor.get_paypal_client_id',
             ],
         },
     },
@@ -131,3 +132,8 @@ GOOGLE_API_KEY='AIzaSyAMdvlmlhQVVqCT8TbKjznN91HGNGE5Nhs'
 
 print("EMAIL_HOST:", EMAIL_HOST)
 print("EMAIL_PORT:", EMAIL_PORT)
+
+
+PAYPAL_CLIENT_ID=config('PAYPAL_CLIENT_ID')
+
+SECURE_CROSS_ORIGIN_OPENER_POLICY='same-origin-allow-popups'
