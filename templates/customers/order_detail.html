@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+{% include 'includes/alert.html' %}
+
+<div class="main-section">
+    {% include 'customers/cover.html' %}
+
+    <div class="page-section account-header buyer-logged-in">
+        <div class="container">
+            <div class="row">
+
+                <!-- SIDEBAR -->
+                <div class="col-lg-3 col-md-3 col-sm-12">
+                    {% include "includes/customer_sidebar.html" %}
+                </div>
+
+                <!-- RIGHT SIDE -->
+                <div class="col-lg-9 col-md-9 col-sm-12">
+                    <div class="user-dashboard">
+                        <div class="bg-white p-4 mb-5">
+
+                            <img src="{% static 'logo/logomain.png' %}" width="150" alt="Logo">
+
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <h4>Thank You For Your Order</h4>
+                                </div>
+                                <div class="col-md-6 text-right">
+                                    <p class="mb-0">{{ order.name }}</p>
+                                    <p class="mb-0">{{ order.address }}</p>
+                                    <p class="mb-0">{{ order.phone }}</p>
+                                    <p class="mb-0">{{ order.email }}</p>
+                                </div>
+                            </div>
+
+                            <hr>
+
+                            <div class="row text-center">
+                                <div class="col-md-3">
+                                    <small>Order Date</small><br>
+                                    <b>{{ order.created_at }}</b>
+                                </div>
+                                <div class="col-md-3">
+                                    <small>Order Number</small><br>
+                                    <b>{{ order.order_number }}</b>
+                                </div>
+                                <div class="col-md-3">
+                                    <small>Payment</small><br>
+                                    <b>{{ order.payment_method }}</b>
+                                </div>
+                                <div class="col-md-3">
+                                    <small>Transaction ID</small><br>
+                                    <b>{{ order.payment.transaction_id }}</b>
+                                </div>
+                            </div>
+
+                            <hr>
+
+                            <!-- ORDER ITEMS -->
+                            <table class="table">
+                                <tbody>
+                                    {% for item in ordered_food %}
+                                    <tr>
+                                        <td><img src="{{ item.fooditem.image.url }}" width="60"></td>
+                                        <td>
+                                            <b>{{ item.fooditem }}</b><br>
+                                            <small class="text-muted">
+                                                {{ item.fooditem.vendor.vendor_name }}
+                                            </small>
+                                        </td>
+                                        <td>{{ item.quantity }} Qty</td>
+                                        <td>Rs. {{ item.fooditem.price }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+
+                            <div class="row mt-4">
+                                <div class="col-md-6 text-center">
+                                    <img src="{% static 'images/paid.png' %}" width="140">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <ul class="list-unstyled">
+
+                                        <li class="d-flex justify-content-between">
+                                            <span>Subtotal</span>
+                                            <span>Rs. {{ subtotal }}</span>
+                                        </li>
+
+                                        {% for key, value in tax_data.items %}
+                                        {% for tax_pct, tax_amt in value.items %}
+                                        <li class="d-flex justify-content-between">
+                                            <span>{{ key }} ({{ tax_pct }}%)</span>
+                                            <span>Rs. {{ tax_amt }}</span>
+                                        </li>
+                                        {% endfor %}
+                                        {% endfor %}
+
+                                        <li class="d-flex justify-content-between font-weight-bold border-top pt-2">
+                                            <span>TOTAL</span>
+                                            <span>Rs. {{ order.total }}</span>
+                                        </li>
+
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <hr>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <b>Thanks for ordering with us.</b><br>
+                                    RestroSpot
+                                </div>
+                                <div class="col-md-6 text-right">
+                                    <b>Need Help?</b><br>
+                                    Call: +977985555555
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+                <!-- END RIGHT SIDE -->
+
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

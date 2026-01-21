@@ -99,7 +99,7 @@ def payments(request):
             )
 
         # Clear cart
-        #cart_items.delete()
+        cart_items.delete()
 
         # IMPORTANT: send redirect URL
         response = {
