@@ -1,7 +1,8 @@
 from django.shortcuts import get_object_or_404, render,redirect  # Import functions to render templates, redirect users, and get objects safely
 from django.http import HttpResponse, JsonResponse  # Import JsonResponse for AJAX responses
 
-from menu.forms import CategoryForm,FoodItemForm # Import forms for Category and FoodItem
+from menu.forms import CategoryForm,FoodItemForm
+from orders.models import Order, OrderedFood # Import forms for Category and FoodItem
 from .forms import VendorForm,OpeningHourForm  # Import Vendor form from current app
 from accounts.forms import UserProfileForm  # Import form for UserProfile
 
@@ -312,3 +313,16 @@ def remove_opening_hours(request, pk=None):
             return HttpResponse('Invalid request')
     else:
         return HttpResponse('Authentication required')
+    
+def order_detail(request,order_number):
+    try:
+        order=Order.objects.get(order_number=order_number,is_ordered=True)
+        ordered_food=OrderedFood.objects.filter(order=order,fooditem__vendor=get_vendor(request))
+
+        context={
+            'order':order,
+            'ordered_food':ordered_food,
+        }
+    except:
+        return redirect('vendor')
+    return render(request,'vendor/order_detail.html',context)
