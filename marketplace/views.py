@@ -8,6 +8,7 @@ from .models import Cart     # Import Cart model
 from .context_processors import get_cart_counter,get_cart_amounts    # Import function to get total cart items
 from django.contrib.auth.decorators import login_required   # For login-required views
 from django.db.models import Q
+from accounts.views import check_role_customer  # Import customer role check
 
 from datetime import date,datetime
 from orders.forms import OrderForm
@@ -64,7 +65,7 @@ def vendor_detail(request,vendor_slug):
 
 # Add food item to cart via AJAX
 def add_to_cart(request,food_id):
-    if request.user.is_authenticated:  # User must be logged in
+    if request.user.is_authenticated and check_role_customer(request.user):  # User must be logged in AND be a customer
         if request.headers.get('x-requested-with') == 'XMLHttpRequest': # Check AJAX request
             # Check if the food item exists
             try:
@@ -86,11 +87,14 @@ def add_to_cart(request,food_id):
         else:
             return JsonResponse({'status':'Failed','message':'Invalid request'})
     else:
-        return HttpResponse({'status':'login_required','message':'please login to continue'})
-    
+        if not request.user.is_authenticated:
+            return JsonResponse({'status':'login_required','message':'Please login to continue'})
+        else:
+            return JsonResponse({'status':'access_denied','message':'Only customers can add items to cart'})
+
 # Decrease quantity of cart item via AJAX
 def decrease_cart(request,food_id):
-    if request.user.is_authenticated:
+    if request.user.is_authenticated and check_role_customer(request.user):
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
             # Check if the food item exists
             try:
@@ -113,11 +117,21 @@ def decrease_cart(request,food_id):
         else:
             return JsonResponse({'status':'Failed','message':'Invalid request'})
     else:
-        return HttpResponse({'status':'login_required','message':'please login to continue'})
+        if not request.user.is_authenticated:
+            return JsonResponse({'status':'login_required','message':'Please login to continue'})
+        else:
+            return JsonResponse({'status':'access_denied','message':'Only customers can modify cart items'})
 
 # 5️⃣ Display the cart page for logged-in users
 @login_required(login_url='login')
 def cart(request):
+    try:
+        # Check if user is a customer
+        if not check_role_customer(request.user):
+            return redirect('vendorDashboard')  # Redirect vendors to their dashboard
+    except:
+        return redirect('vendorDashboard')  # Handle PermissionDenied exception
+    
     cart_items=Cart.objects.filter(user=request.user).order_by('created_at')  # Get all cart items for user
     context={
         'cart_items':cart_items,
@@ -126,7 +140,7 @@ def cart(request):
 
 # 6️⃣ Delete a cart item via AJAX
 def delete_cart(request,cart_id):
-    if request.user.is_authenticated:
+    if request.user.is_authenticated and check_role_customer(request.user):
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
             try:
                 # Check if the cart item exist
@@ -138,7 +152,11 @@ def delete_cart(request,cart_id):
                 return JsonResponse({'status':'Failed','message':'Cart Item does not exist!'})
         else:
             return JsonResponse({'status':'Failed','message':'Invalid request!'})
-
+    else:
+        if not request.user.is_authenticated:
+            return JsonResponse({'status':'login_required','message':'Please login to continue'})
+        else:
+            return JsonResponse({'status':'access_denied','message':'Only customers can delete cart items'})
 
 def search(request):
     # Get search parameters safely with defaults
@@ -177,6 +195,13 @@ def search(request):
 
 @login_required(login_url='login')
 def checkout(request):
+    try:
+        # Check if user is a customer
+        if not check_role_customer(request.user):
+            return redirect('vendorDashboard')  # Redirect vendors to their dashboard
+    except:
+        return redirect('vendorDashboard')  # Handle PermissionDenied exception
+    
     cart_items=Cart.objects.filter(user=request.user).order_by('created_at')
     cart_count=cart_items.count()
     if cart_count <=0:

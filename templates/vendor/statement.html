@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+{% include 'includes/alert.html' %}
+
+<!-- Main Section Start -->
+<div class="main-section">
+	{% include 'includes/cover.html' %}
+	<div class="page-section account-header buyer-logged-in">
+		<div class="container">
+			<div class="row">
+				<div class="col-lg-3 col-md-3 col-sm-12 col-xs-12">
+					<!-- Load the sidebar -->
+					{% include 'includes/vendor_sidebar.html' %}
+				</div>
+				<div class="col-lg-9 col-md-9 col-sm-12 col-xs-12">
+					<div class="user-dashboard loader-holder">
+						<div class="user-holder">
+							<h5 class="text-uppercase">Statement</h5>
+							<p class="text-right">Logged in as: <b>{{user.email}}</b></p>
+							
+							<!-- Summary Cards -->
+							<div class="row">
+								<div class="col-lg-4 col-md-4 col-sm-12 col-xs-12">
+									<div class="card">
+										<div class="div card-header">
+											Total Earnings
+										</div>
+										<div class="card-body text-center">
+											<h5 class="card-title">Rs.{{total_earnings | floatformat:2}}</h5>
+										</div>
+									</div>
+								</div>
+							</div>
+							<br>
+
+							<!-- Date Filter -->
+							<div class="row">
+								<div class="col-lg-12">
+									<div class="card">
+										<div class="card-header">
+											<h6>Filter by Date Range</h6>
+										</div>
+										<div class="card-body">
+											<form method="GET" class="form-inline">
+												<div class="form-group mr-2">
+													<label for="start_date">From:</label>
+													<input type="date" name="start_date" class="form-control" value="{{request.GET.start_date}}">
+												</div>
+												<div class="form-group mr-2">
+													<label for="end_date">To:</label>
+													<input type="date" name="end_date" class="form-control" value="{{request.GET.end_date}}">
+												</div>
+												<button type="submit" class="btn btn-primary">Filter</button>
+												<a href="{% url 'vendor_statement' %}" class="btn btn-secondary">Clear</a>
+											</form>
+										</div>
+									</div>
+								</div>
+							</div>
+							<br>
+
+							<!-- Transaction History -->
+							<div class="row">
+								<div class="col-lg-12">
+									<div class="card">
+										<div class="card-header">
+											<h6>Transaction History</h6>
+										</div>
+										<div class="card-body">
+											<div class="table-responsive">
+												<table class="table table-striped">
+													<thead>
+														<tr>
+															<th>Order #</th>
+															<th>Date</th>
+															<th>Customer</th>
+															<th>Amount</th>
+															<th>Status</th>
+															<th>Payment Method</th>
+															<th>Action</th>
+														</tr>
+													</thead>
+													<tbody>
+														{% for order in orders %}
+														<tr>
+															<td>{{order.order_number}}</td>
+															<td>{{order.created_at|date:"d M Y"}}</td>
+															<td>{{order.name}}</td>
+															<td>Rs.{{order.get_total_by_vendor.grand_total | floatformat:2}}</td>
+															<td>
+																{% if order.status == 'Completed' %}
+																	<span class="badge badge-success">{{order.status}}</span>
+																{% elif order.status == 'Cancelled' %}
+																	<span class="badge badge-danger">{{order.status}}</span>
+																{% else %}
+																	<span class="badge badge-warning">{{order.status}}</span>
+																{% endif %}
+															</td>
+															<td>{{order.payment_method}}</td>
+															<td><a href="{% url 'vendor_order_detail' order.order_number %}" class="btn btn-sm btn-info">View</a></td>
+														</tr>
+														{% empty %}
+														<tr>
+															<td colspan="6" class="text-center">No transactions found for the selected period.</td>
+														</tr>
+														{% endfor %}
+													</tbody>
+												</table>
+											</div>
+											
+											<!-- Export Options -->
+											<div class="mt-3">
+												<form method="GET" action="{% url 'vendor_statement' %}">
+													<input type="hidden" name="export" value="csv">
+													{% if request.GET.start_date %}
+														<input type="hidden" name="start_date" value="{{request.GET.start_date}}">
+													{% endif %}
+													{% if request.GET.end_date %}
+														<input type="hidden" name="end_date" value="{{request.GET.end_date}}">
+													{% endif %}
+													<button type="submit" class="btn btn-success">
+														<i class="icon-download"></i> Export to CSV
+													</button>
+												</form>
+												<button class="btn btn-danger" onclick="window.print()">
+													<i class="icon-print"></i> Print Statement
+												</button>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<!-- Main Section End -->
+
+{% endblock %}

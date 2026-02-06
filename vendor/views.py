@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404, render,redirect  # Import functions to render templates, redirect users, and get objects safely
 from django.http import HttpResponse, JsonResponse  # Import JsonResponse for AJAX responses
+import datetime
 
 from menu.forms import CategoryForm,FoodItemForm
 from orders.models import Order, OrderedFood # Import forms for Category and FoodItem
@@ -339,3 +340,126 @@ def my_orders(request):
 
     }
     return render(request, 'vendor/my_orders.html',context)
+
+@login_required(login_url='login')
+@user_passes_test(check_role_vendor)
+def earnings(request):
+    vendor = Vendor.objects.get(user=request.user)
+    orders = Order.objects.filter(vendors__in=[vendor.id], is_ordered=True).order_by('-created_at')
+    
+    # Calculate total earnings
+    total_earnings = 0
+    for order in orders:
+        total_earnings += order.get_total_by_vendor()['grand_total']
+    
+    # Calculate current month earnings
+    current_month = datetime.datetime.now().month
+    current_month_orders = orders.filter(created_at__month=current_month)
+    current_month_earnings = 0
+    for order in current_month_orders:
+        current_month_earnings += order.get_total_by_vendor()['grand_total']
+    
+    # Calculate daily earnings for the last 7 days
+    daily_earnings = []
+    for i in range(7):
+        date = datetime.datetime.now() - datetime.timedelta(days=i)
+        day_orders = orders.filter(created_at__date=date.date())
+        day_total = 0
+        for order in day_orders:
+            day_total += order.get_total_by_vendor()['grand_total']
+        daily_earnings.append({
+            'date': date.strftime('%Y-%m-%d'),
+            'amount': day_total
+        })
+    
+    # Monthly earnings for the current year
+    monthly_earnings = []
+    current_year = datetime.datetime.now().year
+    for month in range(1, 13):
+        month_orders = orders.filter(created_at__year=current_year, created_at__month=month)
+        month_total = 0
+        order_numbers = []
+        for order in month_orders:
+            month_total += order.get_total_by_vendor()['grand_total']
+            order_numbers.append(order.order_number)
+        monthly_earnings.append({
+            'month': month,
+            'month_name': datetime.date(current_year, month, 1).strftime('%B'),
+            'amount': month_total,
+            'order_numbers': order_numbers,
+            'order_count': len(order_numbers)
+        })
+    
+    context = {
+        'total_earnings': total_earnings,
+        'current_month_earnings': current_month_earnings,
+        'daily_earnings': daily_earnings,
+        'monthly_earnings': monthly_earnings,
+        'orders_count': orders.count(),
+        'recent_orders': orders[:10],
+        'current_year': current_year,
+    }
+    
+    return render(request, 'vendor/earnings.html', context)
+
+@login_required(login_url='login')
+@user_passes_test(check_role_vendor)
+def statement(request):
+    vendor = Vendor.objects.get(user=request.user)
+    orders = Order.objects.filter(vendors__in=[vendor.id], is_ordered=True).order_by('-created_at')
+    
+    # Apply date filtering if provided
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    
+    if start_date:
+        orders = orders.filter(created_at__date__gte=start_date)
+    if end_date:
+        orders = orders.filter(created_at__date__lte=end_date)
+    
+    # Handle CSV export
+    if request.GET.get('export') == 'csv':
+        import csv
+        from django.http import HttpResponse
+        
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="vendor_statement_{datetime.datetime.now().strftime("%Y-%m-%d")}.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow(['Order #', 'Date', 'Customer', 'Amount', 'Status', 'Payment Method'])
+        
+        for order in orders:
+            writer.writerow([
+                order.order_number,
+                order.created_at.strftime('%Y-%m-%d %H:%M'),
+                order.name,
+                order.get_total_by_vendor()['grand_total'],
+                order.status,
+                order.payment_method
+            ])
+        
+        return response
+    
+    # Calculate totals
+    total_earnings = 0
+    pending_payments = 0
+    completed_orders_count = 0
+    
+    for order in orders:
+        order_total = order.get_total_by_vendor()['grand_total']
+        total_earnings += order_total
+        
+        if order.status == 'Completed':
+            completed_orders_count += 1
+        elif order.status in ['New', 'Accepted']:
+            pending_payments += order_total
+    
+    context = {
+        'orders': orders,
+        'total_earnings': total_earnings,
+        'pending_payments': pending_payments,
+        'completed_orders_count': completed_orders_count,
+        'current_date': datetime.datetime.now().strftime('%Y-%m-%d'),
+    }
+    
+    return render(request, 'vendor/statement.html', context)

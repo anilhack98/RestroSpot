@@ -17,9 +17,35 @@
 				<div class="col-lg-9 col-md-9 col-sm-12 col-xs-12">
 					<div class="user-dashboard loader-holder">
 						<div class="user-holder">
-							<h5 class="text-uppercase">Overview</h5>
+							<h5 class="text-uppercase">Earnings Overview</h5>
 							<p class="text-right">Logged in as: <b>{{user.email}}</b></p>
+							
+							<!-- Earnings Summary Cards -->
 							<div class="row">
+								<div class="col-lg-4 col-md-4 col-sm-12 col-xs-12">
+									<div class="card">
+										<div class="div card-header">
+											Total Earnings
+										</div>
+										<div class="card-body text-center">
+											<a href="#">
+												<h5 class="card-title">Rs.{{total_earnings | floatformat:2}}</h5>
+											</a>
+										</div>
+									</div>
+								</div>
+								<div class="col-lg-4 col-md-4 col-sm-12 col-xs-12">
+									<div class="card">
+										<div class="div card-header">
+											This Month
+										</div>
+										<div class="card-body text-center">
+											<a href="#">
+												<h5 class="card-title">Rs.{{current_month_earnings | floatformat:2}}</h5>
+											</a>
+										</div>
+									</div>
+								</div>
 								<div class="col-lg-4 col-md-4 col-sm-12 col-xs-12">
 									<div class="card">
 										<div class="div card-header">
@@ -32,34 +58,53 @@
 										</div>
 									</div>
 								</div>
-								<div class="col-lg-4 col-md-4 col-sm-12 col-xs-12">
+							</div>
+							<br>
+
+							<!-- Monthly Earnings Chart -->
+							<div class="row">
+								<div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
 									<div class="card">
-										<div class="div card-header">
-											Total Revenue
+										<div class="card-header">
+											<h6 class="text-uppercase">Monthly Earnings - {{current_year}}</h6>
 										</div>
-										<div class="card-body text-center">
-											<a href="#">
-												<h5 class="card-title">Rs.{{total_revenue | floatformat:2}}</h5>
-											</a>
-										</div>
-									</div>
-								</div>
-								<div class="col-lg-4 col-md-4 col-sm-12 col-xs-12">
-									<div class="card">
-										<div class="div card-header">
-											This Month
-										</div>
-										<div class="card-body text-center">
-											<a href="#">
-												<h5 class="card-title">Rs.{{current_month_revenue | floatformat:2}}</h5>
-											</a>
+										<div class="card-body">
+											<div class="table-responsive">
+												<table class="table table-striped">
+													<thead>
+														<tr>
+															<th>Month</th>
+															<th>Earnings</th>
+															<th>Orders</th>
+														</tr>
+													</thead>
+													<tbody>
+														{% for month_data in monthly_earnings %}
+														<tr>
+															<td>{{month_data.month_name}}</td>
+															<td>Rs.{{month_data.amount | floatformat:2}}</td>
+															<td>
+																{% if month_data.order_numbers %}
+																	{% for order_num in month_data.order_numbers %}
+																		<a href="{% url 'vendor_order_detail' order_num %}" class="badge badge-primary" style="margin-right: 5px;">{{order_num}}</a>
+																	{% endfor %}
+																{% else %}
+																	<span class="text-muted">No orders</span>
+																{% endif %}
+															</td>
+														</tr>
+														{% endfor %}
+													</tbody>
+												</table>
+											</div>
 										</div>
 									</div>
 								</div>
 							</div>
 							<br>
-							<h5 class="text-uppercase">Recent Orders</h5>
 
+							<!-- Recent Orders -->
+							<h5 class="text-uppercase">Recent Orders</h6>
 							<div class="row">
 								<div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
 									<div class="user-orders-list">
@@ -80,9 +125,9 @@
 													<tr>
 														<td>{{order.order_number}}</td>
 														<td>{{order.name}}</td>
-														<td>Rs.{{order.get_total_by_vendor.grand_total}}</td>
+														<td>Rs.{{order.get_total_by_vendor.grand_total | floatformat:2}}</td>
 														<td>{{order.status}}</td>
-														<td>{{order.created_at}}</td>
+														<td>{{order.created_at|date:"d M Y"}}</td>
 														<td><a href="{% url 'vendor_order_detail' order.order_number %}" class="btn btn-danger">Details</a></td>
 													</tr>
 													{% endfor %}
@@ -101,6 +146,5 @@
 	</div>
 </div>
 <!-- Main Section End -->
-
 
 {% endblock %}
