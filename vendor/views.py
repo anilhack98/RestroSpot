@@ -457,8 +457,6 @@ def statement(request):
     context = {
         'orders': orders,
         'total_earnings': total_earnings,
-        'pending_payments': pending_payments,
-        'completed_orders_count': completed_orders_count,
         'current_date': datetime.datetime.now().strftime('%Y-%m-%d'),
     }
     

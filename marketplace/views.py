@@ -1,31 +1,51 @@
-from django.shortcuts import get_object_or_404,render,redirect  # For rendering templates and fetching objects or returning 404
+from django.shortcuts import get_object_or_404, render, redirect  # For rendering templates and fetching objects or returning 404
 from menu.models import Category  # Import food categories and items
-from vendor.models import Vendor,OpeningHour  # Import Vendor model
+from vendor.models import Vendor, OpeningHour  # Import Vendor model
 from django.db.models import Prefetch  # For optimizing queries with prefetch_related
 from menu.models import Category, FoodItem  # Import food categories and items
 from django.http import HttpResponse, JsonResponse  # For returning HTTP and JSON responses
-from .models import Cart     # Import Cart model
-from .context_processors import get_cart_counter,get_cart_amounts    # Import function to get total cart items
-from django.contrib.auth.decorators import login_required   # For login-required views
+from .models import Cart  # Import Cart model
+from .context_processors import get_cart_counter, get_cart_amounts  # Import function to get total cart items
+from django.contrib.auth.decorators import login_required  # For login-required views
 from django.db.models import Q
+from django.db.models import Sum
 from accounts.views import check_role_customer  # Import customer role check
 
-from datetime import date,datetime
+from datetime import date, datetime
 from orders.forms import OrderForm
 from accounts.models import UserProfile
+from orders.utils import get_recommended_fooditems_for_user
+from orders.models import OrderedFood
+
 
 # Marketplace page: list all approved vendor
 def marketplace(request):
     # Get all approved vendors whose user accounts are active
-    vendors=Vendor.objects.filter(is_approved=True,user__is_active=True)
-    # vendors=Vendor.objects.filter(user__is_active=True)
-    vendor_count=vendors.count()   # Count total vendors
+    vendors = Vendor.objects.filter(is_approved=True, user__is_active=True)
+    vendor_count = vendors.count()  # Count total vendors
 
-    context={
-        'vendors':vendors,  # Pass vendor list to template
-        'vendor_count':vendor_count,  # Pass vendor count to template
+    # Top restaurants: ranked by total items purchased (quantity) per vendor
+    base_qs = Vendor.objects.filter(is_approved=True, user__is_active=True)
+    vendor_qty = (
+        OrderedFood.objects.values("fooditem__vendor")
+        .annotate(total_qty=Sum("quantity"))
+        .order_by("-total_qty")
+    )
+    top_vendor_ids = [row["fooditem__vendor"] for row in vendor_qty if row["fooditem__vendor"]]
+    if top_vendor_ids:
+        top_vendor_order = {vid: idx for idx, vid in enumerate(top_vendor_ids)}
+        top_vendors = list(base_qs.filter(id__in=top_vendor_ids)[:12])
+        top_vendors.sort(key=lambda v: top_vendor_order.get(v.id, len(top_vendor_order)))
+        top_vendors = top_vendors[:3]
+    else:
+        top_vendors = []
+
+    context = {
+        "vendors": vendors,  # Pass vendor list to template
+        "vendor_count": vendor_count,  # Pass vendor count to template
+        "top_vendors": top_vendors,
     }
-    return render(request,'marketplace/listings.html',context)
+    return render(request, "marketplace/listings.html", context)
 
 # Vendor detail page: show vendor and their available food item
 def vendor_detail(request,vendor_slug):
@@ -51,15 +71,30 @@ def vendor_detail(request,vendor_slug):
 
     # Get cart items for logged-in user
     if request.user.is_authenticated:
-        cart_items=Cart.objects.filter(user=request.user)
+        cart_items = Cart.objects.filter(user=request.user)
     else:
-        cart_items=None
+        cart_items = None
+
+    # You may also like: recommended dishes for this vendor, for logged-in customers
+    also_like_items = []
+    if request.user.is_authenticated and check_role_customer(request.user):
+        # Start from user-based recent recommendations, then filter to this vendor
+        user_recommended = get_recommended_fooditems_for_user(request.user, limit=20)
+        also_like_items = [item for item in user_recommended if item.vendor_id == vendor.id][:3]
+
+        # Fallback: popular / recent items from this vendor
+        if not also_like_items:
+            also_like_items = list(
+                FoodItem.objects.filter(vendor=vendor, is_available=True).order_by("-created_at")[:3]
+            )
+
     context={
-        'vendor':vendor,
-        'categories':categories,
-        'cart_items':cart_items,
-        'opening_hours':opening_hours,
-        'current_opening_hours':current_opening_hours,
+        "vendor": vendor,
+        "categories": categories,
+        "cart_items": cart_items,
+        "opening_hours": opening_hours,
+        "current_opening_hours": current_opening_hours,
+        "also_like_items": also_like_items,
     }
     return render(request,'marketplace/vendor_detail.html',context)
 
