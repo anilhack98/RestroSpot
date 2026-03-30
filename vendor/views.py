@@ -107,21 +107,26 @@ def add_category(request):
         # Bind POST data to Category form
         form = CategoryForm(request.POST)
         if form.is_valid():
+            category_name = form.cleaned_data['category_name']
             vendor = get_vendor(request)
-             # Don't save yet, assign vendor first
-            category = form.save(commit=False)
-            category.vendor = vendor
-            try:
-                category.save()  #here the category id will be generated
-                # Create URL-friendly slug
-                category.slug = slugify(category.category_name)+'-'+str(category.id)
-                category.save()
-                messages.success(request, "Category added successfully!")
-                return redirect('menu_builder')
-            except IntegrityError:
-                # Add an error to the form
+            
+            if Category.objects.filter(vendor=vendor, category_name__iexact=category_name).exists():
                 form.add_error('category_name', 'Category already exists!')
-                # Handle duplicate category name
+            else:
+                 # Don't save yet, assign vendor first
+                category = form.save(commit=False)
+                category.vendor = vendor
+                try:
+                    category.save()  #here the category id will be generated
+                    # Create URL-friendly slug
+                    category.slug = slugify(category.category_name)+'-'+str(category.id)
+                    category.save()
+                    messages.success(request, "Category added successfully!")
+                    return redirect('menu_builder')
+                except IntegrityError:
+                    # Add an error to the form
+                    form.add_error('category_name', 'Category already exists!')
+                    # Handle duplicate category name
     else:
         form = CategoryForm()  # Show empty form for GET request
 
@@ -143,18 +148,23 @@ def edit_category(request,pk=None):
         # Bind POST data to form with existing category
         form = CategoryForm(request.POST,instance=category)
         if form.is_valid():
+            category_name = form.cleaned_data['category_name']
             vendor = get_vendor(request)
-            category = form.save(commit=False)
-            category.vendor = vendor
-            category.slug = slugify(category.category_name)
-            try:
-                category.save()
-                messages.success(request, "Category Updated successfully!")
-                return redirect('menu_builder')
-
-            except IntegrityError:
-                # Add an error to the form
+            
+            if Category.objects.filter(vendor=vendor, category_name__iexact=category_name).exclude(pk=pk).exists():
                 form.add_error('category_name', 'Category already exists!')
+            else:
+                category = form.save(commit=False)
+                category.vendor = vendor
+                category.slug = slugify(category.category_name)
+                try:
+                    category.save()
+                    messages.success(request, "Category Updated successfully!")
+                    return redirect('menu_builder')
+
+                except IntegrityError:
+                    # Add an error to the form
+                    form.add_error('category_name', 'Category already exists!')
     else:
         form = CategoryForm(instance=category)  # Show form pre-filled with category data
 
