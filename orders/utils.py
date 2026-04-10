@@ -1,5 +1,4 @@
 import datetime
-
 from django.db.models import Count, Max
 
 from menu.models import FoodItem
@@ -15,6 +14,7 @@ def generate_order_number(pk):
 
 def get_recommended_vendors_for_user(user, limit=8):
     """
+    Recency-based recommendation:
     Recommend vendors based on the user's order history.
 
     Strategy:
@@ -81,6 +81,7 @@ def get_recommended_vendors_for_user(user, limit=8):
 
 def get_recommended_fooditems_for_user(user, limit=8):
     """
+    Recency-based recommendation:
     Recommend food items based on the user's recent purchase history.
 
     Strategy:
@@ -104,6 +105,7 @@ def get_recommended_fooditems_for_user(user, limit=8):
         .order_by("-last_order")  # Most recently ordered items come first
     )
 
+
     # 4. Extract the IDs of these previously ordered food items
     food_ids = [row["fooditem"] for row in user_food_counts if row["fooditem"]]
 
@@ -113,6 +115,7 @@ def get_recommended_fooditems_for_user(user, limit=8):
         items = list(base_qs.filter(id__in=food_ids))
         items.sort(key=lambda item: food_order.get(item.id, len(food_order)))
         return items[:limit]
+
 
     # 6. Fallback: If the user has never ordered anything, recommend the
     # most globally popular food items (the items ordered the most times by everyone)

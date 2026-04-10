@@ -20,6 +20,10 @@ from orders.models import OrderedFood
 
 # Marketplace page: list all approved vendor
 def marketplace(request):
+    """
+    Renders the main marketplace page where all approved vendors are listed.
+    Also calculates the top 3 vendors based on total items ordered historically.
+    """
     # Get all approved vendors whose user accounts are active
     vendors = Vendor.objects.filter(is_approved=True, user__is_active=True)
     vendor_count = vendors.count()  # Count total vendors
@@ -49,6 +53,11 @@ def marketplace(request):
 
 # Vendor detail page: show vendor and their available food item
 def vendor_detail(request,vendor_slug):
+    """
+    Shows a specific vendor's dashboard/menu to customers.
+    Fetches the vendor's categories, available food items, opening hours,
+    and recommended dishes based on this vendor's catalog.
+    """
     # Get vendor by slug or return 404 if not found
     vendor=get_object_or_404(Vendor,vendor_slug=vendor_slug)
 
@@ -100,6 +109,10 @@ def vendor_detail(request,vendor_slug):
 
 # Add food item to cart via AJAX
 def add_to_cart(request,food_id):
+    """
+    AJAX endpoint to add or increment a FoodItem in the logged-in customer's Cart.
+    Returns JSON status along with updated cart quantities and monetary amounts.
+    """
     if request.user.is_authenticated and check_role_customer(request.user):  # User must be logged in AND be a customer
         if request.headers.get('x-requested-with') == 'XMLHttpRequest': # Check AJAX request
             # Check if the food item exists
@@ -129,6 +142,10 @@ def add_to_cart(request,food_id):
 
 # Decrease quantity of cart item via AJAX
 def decrease_cart(request,food_id):
+    """
+    AJAX endpoint to selectively decrement a FoodItem in a customer's Cart.
+    If the quantity drops below 1, the cart item is deleted entirely.
+    """
     if request.user.is_authenticated and check_role_customer(request.user):
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
             # Check if the food item exists
@@ -194,6 +211,10 @@ def delete_cart(request,cart_id):
             return JsonResponse({'status':'access_denied','message':'Only customers can delete cart items'})
 
 def search(request):
+    """
+    Handles search queries to find distinct Vendors.
+    Matches the search keyword against Vendor name OR any FoodItem name associated with them.
+    """
     # Get search parameters safely with defaults
     keyword = request.GET.get('keyword', '')
     address = request.GET.get('address', '')
@@ -230,6 +251,10 @@ def search(request):
 
 @login_required(login_url='login')
 def checkout(request):
+    """
+    Renders the checkout form. 
+    Pre-fills user details from UserProfile to make ordering faster.
+    """
     try:
         # Check if user is a customer
         if not check_role_customer(request.user):

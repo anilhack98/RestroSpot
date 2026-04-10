@@ -9,6 +9,10 @@ import simplejson as json
 
 @login_required(login_url='login')
 def cprofile(request):
+    """
+    Renders and handles the form for a customer to update their main profile 
+    and address information.
+    """
     profile=get_object_or_404(UserProfile,user=request.user)
     if request.method=='POST':
         profile_form=UserProfileForm(request.POST,request.FILES,instance=profile)
@@ -33,6 +37,10 @@ def cprofile(request):
     return render(request,'customers/cprofile.html',context)
 
 def my_orders(request):
+    """
+    Shows a complete history of successful orders placed by the current customer,
+    sorted by the most recent first.
+    """
     orders=Order.objects.filter(user=request.user,is_ordered=True).order_by('-created_at')
 
     context={
@@ -41,6 +49,10 @@ def my_orders(request):
     return render(request,'customers/my_orders.html', context)
 
 def order_detail(request, order_number):
+    """
+    Shows the specific details of an order to the customer.
+    This view recalculates the customer-side total based on the individual food items.
+    """
     try:
         order=Order.objects.get(order_number=order_number,is_ordered=True)
         ordered_food=OrderedFood.objects.filter(order=order)

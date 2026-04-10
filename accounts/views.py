@@ -33,6 +33,10 @@ def check_role_customer(user):
         raise PermissionDenied
 
 def registerUser(request):
+    """
+    Handles standard customer registration.
+    Creates a new User marked with the CUSTOMER role and initializes a blank UserProfile.
+    """
     # Prevent logged-in users from registering again
     if request.user.is_authenticated:
         messages.warning(request,'You are already logged in.')
@@ -79,6 +83,10 @@ def registerUser(request):
 
 
 def registerVendor(request):
+    """
+    Handles vendor/restaurant registration.
+    Simultaneously creates a User (VENDOR role), a UserProfile, and a Vendor entity.
+    """
     # Prevent logged-in users from registering again
     if request.user.is_authenticated:
         messages.warning(request, 'You are already logged in.')
@@ -134,22 +142,6 @@ def registerVendor(request):
         'v_form': v_form,
     })
 
-
-# def activate(request,uidb64,token):
-#     # Activate the user by setting the is_activate status to True
-#     try:
-#         uid=urlsafe_base64_decode(uidb64).decode()
-#         user=user.default_manager.get(pk=uid)
-#     except(TypeError,ValueError,OverflowError,User.DoesNotExist):
-#         user=None
-#     if user is not None and default_token_generator.check_token(user,token):
-#         user.is_active=True
-#         user.save()
-#         messages.success(request,'Congratulation You account is activated.')
-#         return redirect('myAccount')
-#     else:
-#         messages.error(request,'Invalid activation link')
-#         return redirect('myAccount')
     
 def login(request):
     if request.user.is_authenticated:
@@ -186,6 +178,9 @@ def myAccount(request):
 @login_required(login_url='login')
 @user_passes_test(check_role_customer)
 def customerDashboard(request):
+    """
+    Renders the customer dashboard showing their recent successful order history.
+    """
     orders=Order.objects.filter(user=request.user,is_ordered=True)
     recent_orders=orders[:5]  # Shows the recent 5 orders
     context = {
@@ -199,6 +194,11 @@ def customerDashboard(request):
 @login_required(login_url='login')
 @user_passes_test(check_role_vendor)
 def vendorDashboard(request):
+    """
+    Renders the main vendor dashboard.
+    Calculates key metrics like total historical revenue and current month's revenue
+    attributed strictly to this vendor's portions of orders.
+    """
     vendor = Vendor.objects.get(user=request.user)
     orders=Order.objects.filter(vendors__in=[vendor.id], is_ordered=True).order_by('-created_at')
     recent_orders=orders[:10]
@@ -223,44 +223,3 @@ def vendorDashboard(request):
         'current_month_revenue':current_month_revenue,
     }
     return render(request,'accounts/vendorDashboard.html',context)
-
-# def forgot_password(request):
-#     if request.method=='POST':
-#         email=request.POST['email']
-
-#         if User.objects.filter(email=email).exists():
-#             user=User.objects.get(email__exact=email)
-
-#             # send Reset password email
-#             # send_password_reset_email(request,user)
-
-#             messages.success(request,'Password reset link has been sent to your email address')
-#             return redirect('login')
-#         else:
-#             messages.error(request,'Account does not exist')
-#             return render(request,'accounts/forgot_password')
-#     return render(request,'accounts/forgot_password.html')
-
-# def reset_password_validate(request):
-#     return render(request,'accounts/forgot_password.html')
-
-# def reset_password(request):
-#     if request.method == 'POST':
-#         password = request.POST['password']
-#         confirm_password = request.POST['confirm_password']
-
-#         if password == confirm_password:
-#             uid = request.session.get('uid')
-#             user = User.objects.get(pk=uid)
-#             user.set_password(password)
-#             user.is_active = True
-#             user.save()
-
-#             messages.success(request, 'Your password has been reset successfully!')
-#             return redirect('login')
-
-#         else:
-#             messages.error(request, 'Passwords do not match')
-#             return redirect('reset_password')
-    
-#     return render(request, 'accounts/reset_password.html')

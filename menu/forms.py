@@ -15,9 +15,9 @@ class FoodItemForm(forms.ModelForm):
     
     # Creates a decimal number field
     price=forms.DecimalField(
-        min_value=0,  #Prevents negative values
+        min_value=0.01,  # Prevents zero and negative values
         decimal_places=2, # Allows only 2 digits after decimal
-        widget=forms.NumberInput(attrs={'class':'form-control', 'step': '0.01', 'min': '0'})
+        widget=forms.NumberInput(attrs={'class':'form-control', 'step': '0.01', 'min': '0.01'})
     )
     class Meta:
         model=FoodItem

@@ -4,6 +4,10 @@ from menu .models import FoodItem
 
 # Define a function to get the total number of items in the user's cart
 def get_cart_counter(request):
+    """
+    Context processor that exposes the total quantity of items in the current user's cart
+    to all templates globally.
+    """
     cart_count=0    # Initialize the cart count to 0
     if request.user.is_authenticated:   # Check if the user is logged in
         try:
@@ -21,6 +25,10 @@ def get_cart_counter(request):
 
 # Made function of get_cart_amounts with variable 0
 def get_cart_amounts(request):
+    """
+    Context processor that computes the cart's subtotal, dynamic tax based on Tax models,
+    and grand total. This data is available to all templates globally.
+    """
     subtotal=0
     tax=0
     grand_total=0

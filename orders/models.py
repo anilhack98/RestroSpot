@@ -8,6 +8,9 @@ request_object=''
 
 
 class Payment(models.Model):
+    """
+    Records a payment transaction made by a user for an order.
+    """
     PAYMENT_METHOD=(
         ('PayPal','PayPal'),
     )
@@ -22,6 +25,10 @@ class Payment(models.Model):
         return self.transaction_id
 
 class Order(models.Model):
+    """
+    Represents a complete checkout order that a user places.
+    An order can contain items from multiple vendors.
+    """
     STATUS=(
         ('New','New'),
         ('Accepted','Accepted'),
@@ -61,6 +68,10 @@ class Order(models.Model):
         return " , ".join([str(i) for i in self.vendors.all()])
     
     def get_total_by_vendor(self):
+        """
+        Parses the JSON `total_data` field to calculate the specific subtotal 
+        and taxes owed to the currently logged-in vendor.
+        """
         vendor=Vendor.objects.get(user=request_object.user)
         subtotal=0
         tax=0
@@ -93,6 +104,10 @@ class Order(models.Model):
         return self.order_number
 
 class OrderedFood(models.Model):
+    """
+    A line-item representing a specific FoodItem purchased in an Order.
+    Links the grand Order to the individual items for easy querying.
+    """
     order=models.ForeignKey(Order,on_delete=models.CASCADE)
     payment=models.ForeignKey(Payment,on_delete=models.SET_NULL,blank=True,null=True)
     user=models.ForeignKey(User,on_delete=models.CASCADE)

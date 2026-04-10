@@ -5,6 +5,11 @@ from datetime import time,date,datetime
 
 # Vendor model: represents a vendor in the marketplace
 class Vendor(models.Model):
+    """
+    Represents a restaurant or food vendor.
+    It links directly to a common User and UserProfile but adds business-specific attributes
+    like license, approval status, and name/slug.
+    """
     user = models.OneToOneField(User, related_name='user', on_delete=models.CASCADE)
     user_profile = models.OneToOneField(UserProfile, related_name='userprofile', on_delete=models.CASCADE)
     vendor_name = models.CharField(max_length=50)
@@ -25,6 +30,10 @@ class Vendor(models.Model):
         return self.vendor_name
     
     def is_open(self):
+        """
+        Calculates if the vendor is currently open based on the current system time
+        and the predefined OpeningHour objects for today.
+        """
         # Check current day's opening Hour
         today_date = date.today()
         today = today_date.isoweekday()
@@ -60,6 +69,10 @@ HOUR_OF_DAY_24 = [
 ]
 
 class OpeningHour(models.Model):
+    """
+    Represents a specific time block during which a Vendor is physically open.
+    Links a Vendor to a day of the week (1-7), start time, and end time.
+    """
     vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE)
     day = models.IntegerField(choices=DAYS)
     from_hour = models.CharField(max_length=10, choices=HOUR_OF_DAY_24, blank=True)

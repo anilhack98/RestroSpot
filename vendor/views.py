@@ -98,7 +98,6 @@ def fooditems_by_category(request,pk=None):
     # Render page with food items 
 
 
-
 # 5️⃣ Add category
 @login_required(login_url='login')
 @user_passes_test(check_role_vendor)
@@ -110,7 +109,7 @@ def add_category(request):
             category_name = form.cleaned_data['category_name']
             vendor = get_vendor(request)
             
-            if Category.objects.filter(vendor=vendor, category_name__iexact=category_name).exists():
+            if Category.objects.filter(vendor=vendor, category_name__iexact=category_name).exists():  # iexact means Compare two values exactly, but ignore uppercase/lowercase
                 form.add_error('category_name', 'Category already exists!')
             else:
                  # Don't save yet, assign vendor first
@@ -124,7 +123,7 @@ def add_category(request):
                     messages.success(request, "Category added successfully!")
                     return redirect('menu_builder')
                 except IntegrityError:
-                    # Add an error to the form
+                     # Add an error to the form
                     form.add_error('category_name', 'Category already exists!')
                     # Handle duplicate category name
     else:
@@ -204,6 +203,7 @@ def add_food(request):
             food.vendor = vendor
             food.slug = slugify(foodtitle)
 
+
             try:
                 food.save()
                 messages.success(request, "Food Item added successfully!")
@@ -267,6 +267,9 @@ def delete_food(request,pk=None):
 
 
 def opening_hours(request):
+    """
+    Renders the opening hours configuration page for the logged-in vendor.
+    """
     opening_hours=OpeningHour.objects.filter(vendor=get_vendor(request))
     form=OpeningHourForm()
     context={
@@ -276,6 +279,10 @@ def opening_hours(request):
     return render(request,'vendor/opening_hour.html', context)
 
 def add_opening_hours(request):
+    """
+    AJAX endpoint to add a new opening hour configuration for the logged-in vendor.
+    Validates overlapping or duplicate days/hours.
+    """
     # Handle the data and save them inside the database
     if request.user.is_authenticated:
         if request.headers.get('x-requested-with') == 'XMLHttpRequest' and request.method=='POST':
@@ -283,6 +290,11 @@ def add_opening_hours(request):
             from_hour=request.POST.get('from_hour')
             to_hour=request.POST.get('to_hour')
             is_closed=request.POST.get('is_closed')
+
+            # Basic validation to prevent same opening and closing hours when not closed
+            if is_closed != 'True' and from_hour == to_hour:
+                response={'status':'failed','message':'Opening and closing hours cannot be the same'}
+                return JsonResponse(response)
             try:
                 hour=OpeningHour.objects.create(vendor=get_vendor(request),day=day,from_hour=from_hour,to_hour=to_hour,is_closed=is_closed)
                 
@@ -307,6 +319,9 @@ def add_opening_hours(request):
         return HttpResponse('Authentication required')
 
 def remove_opening_hours(request, pk=None):
+    """
+    AJAX endpoint to delete an existing opening hour configuration.
+    """
     if request.user.is_authenticated:
         if request.headers.get('x-requested-with') == 'XMLHttpRequest' and request.method=='GET':
             try:
@@ -326,6 +341,10 @@ def remove_opening_hours(request, pk=None):
         return HttpResponse('Authentication required')
     
 def order_detail(request,order_number):
+    """
+    Shows the specific details of a customer's order for the vendor.
+    Calculates subtotal and tax allocation strictly for this vendor's portion of the order.
+    """
     try:
         order=Order.objects.get(order_number=order_number,is_ordered=True)
         ordered_food=OrderedFood.objects.filter(order=order,fooditem__vendor=get_vendor(request))
@@ -342,6 +361,9 @@ def order_detail(request,order_number):
     return render(request,'vendor/order_detail.html',context)
 
 def my_orders(request):
+    """
+    Renders a list of all successful orders placed that include items from this vendor.
+    """
     vendor = Vendor.objects.get(user=request.user)
     orders=Order.objects.filter(vendors__in=[vendor.id], is_ordered=True).order_by('-created_at')
 
@@ -354,6 +376,10 @@ def my_orders(request):
 @login_required(login_url='login')
 @user_passes_test(check_role_vendor)
 def earnings(request):
+    """
+    Calculates and displays a dashboard of the vendor's earnings.
+    Breaks down earnings logically into total, current month, last 7 days, and monthly averages.
+    """
     vendor = Vendor.objects.get(user=request.user)
     orders = Order.objects.filter(vendors__in=[vendor.id], is_ordered=True).order_by('-created_at')
     
@@ -415,6 +441,10 @@ def earnings(request):
 @login_required(login_url='login')
 @user_passes_test(check_role_vendor)
 def statement(request):
+    """
+    Renders the vendor's financial statement, allowing filtering by date bounds.
+    Can also export the financial records to a downloadable CSV file.
+    """
     vendor = Vendor.objects.get(user=request.user)
     orders = Order.objects.filter(vendors__in=[vendor.id], is_ordered=True).order_by('-created_at')
     

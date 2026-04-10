@@ -11,12 +11,18 @@ from django.contrib.auth.decorators import login_required
 
 @login_required(login_url='login')
 def place_order(request):
+    """
+    Handles the checkout process for the user's cart. 
+    Calculates subtotal, taxes, and vendor-specific totals before creating the Order objects.
+    """
+    # Fetch all items currently in the logged-in user's cart
     cart_items = Cart.objects.filter(user=request.user).order_by('created_at')
     cart_count = cart_items.count()
 
     if cart_count <= 0:
         return redirect('marketplace')
     
+    # Gather all unique vendor IDs linked to the cart items
     vendors_ids=[]
     for i in cart_items:
         if i.fooditem.vendor.id not in vendors_ids:
@@ -26,6 +32,7 @@ def place_order(request):
     subtotal=0
     total_data={}
     k={}
+    # Calculate vendor-specific subtotal and create total_data structure
     for i in cart_items:
         fooditem=FoodItem.objects.get(pk=i.fooditem.id, vendor_id__in=vendors_ids)
         v_id = fooditem.vendor.id
@@ -60,7 +67,7 @@ def place_order(request):
         form = OrderForm(request.POST)
         if form.is_valid():
             order = Order()
-            order.first_name = form.cleaned_data['first_name']
+            order.first_name = form.cleaned_data['first_name']    # cleaned_data = ✔ validated data
             order.last_name = form.cleaned_data['last_name']
             order.phone = form.cleaned_data['phone']
             order.email = form.cleaned_data['email']
@@ -112,6 +119,11 @@ def place_order(request):
 
 
 def payments(request):
+    """
+    Handles the async payment completion callback via AJAX.
+    Saves the transaction details, links the payment to the order, 
+    and converts Cart items into OrderedFood records.
+    """
     # Check AJAX POST request
     if request.headers.get('x-requested-with') == 'XMLHttpRequest' and request.method == 'POST':
 
@@ -166,10 +178,14 @@ def payments(request):
 
 
 def order_complete(request):
+    """
+    Displays the order summary page after a successful payment transaction.
+    """
     order_number = request.GET.get('order_no')
     transaction_id = request.GET.get('trans_id')
 
     try:
+        # Verify the order actually went through and matches the transaction
         order = Order.objects.get(
             order_number=order_number,
             payment__transaction_id=transaction_id,
