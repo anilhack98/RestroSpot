@@ -19,6 +19,8 @@ class Payment(models.Model):
     payment_method=models.CharField(choices=PAYMENT_METHOD,max_length=100)
     amount=models.CharField(max_length=10)
     status=models.CharField(max_length=100)
+    refund_status=models.CharField(max_length=50, choices=(('No Refund','No Refund'),('Full Refund','Full Refund'),('Partial Refund','Partial Refund')), default='No Refund')
+    refund_amount=models.CharField(max_length=10, blank=True, null=True)
     created_at=models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -34,6 +36,7 @@ class Order(models.Model):
         ('Accepted','Accepted'),
         ('Completed','Completed'),
         ('Cancelled','Cancelled'),
+        ('Failure','Failure'),
     )
 
     user=models.ForeignKey(User,on_delete=models.SET_NULL,null=True)
@@ -55,6 +58,7 @@ class Order(models.Model):
     total_tax=models.FloatField()
     payment_method=models.CharField(max_length=25)
     status=models.CharField(max_length=15,choices=STATUS, default='New')
+    cancel_reason=models.TextField(blank=True, null=True)
     is_ordered=models.BooleanField(default=False)
     created_at=models.DateTimeField(auto_now_add=True)
     updated_at=models.DateTimeField(auto_now_add=True)

@@ -7,7 +7,11 @@ from .forms import OrderForm
 from .models import Order, OrderedFood, Payment
 import simplejson as json
 from .utils import generate_order_number
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.utils import timezone
+from django.shortcuts import get_object_or_404
+from django.contrib import messages
+from accounts.views import check_role_vendor
 
 @login_required(login_url='login')
 def place_order(request):
@@ -209,3 +213,83 @@ def order_complete(request):
 
     except Order.DoesNotExist:
         return redirect('home')
+
+@login_required(login_url='login')
+def cancel_order(request, order_number):
+    """
+    Allows a customer to cancel their order.
+    Logic:
+    - If cancelled within 30 minutes: Full Refund.
+    - If cancelled after 30 minutes: No Refund.
+    """
+    order = get_object_or_404(Order, order_number=order_number, user=request.user)
+    
+    # Check if order can be cancelled (e.g., not already completed or failed)
+    if order.status in ['Completed', 'Failure', 'Cancelled']:
+        messages.error(request, f'Order cannot be cancelled as it is already {order.status}.')
+        return redirect('order_detail', order.order_number)
+
+    # Calculate time difference
+    order_time = order.created_at
+    current_time = timezone.now()
+    time_difference = current_time - order_time
+    minutes_elapsed = time_difference.total_seconds() / 60
+
+    if minutes_elapsed < 30:
+        # Scenario 1: Quick cancellation - Full Refund
+        order.status = 'Cancelled'
+        order.cancel_reason = request.POST.get('cancel_reason', 'Quick cancellation by customer')
+        order.save()
+        
+        if order.payment:
+            payment = order.payment
+            payment.refund_status = 'Full Refund'
+            payment.refund_amount = payment.amount
+            payment.save()
+        
+        messages.success(request, 'Order cancelled successfully. A full refund has been initiated.')
+    else:
+        # Scenario 3: Late cancellation - No Refund
+        order.status = 'Cancelled'
+        order.cancel_reason = request.POST.get('cancel_reason', 'Late cancellation by customer')
+        order.save()
+        
+        if order.payment:
+            payment = order.payment
+            payment.refund_status = 'No Refund'
+            payment.save()
+            
+        messages.warning(request, 'Order cancelled, but no refund is applicable for orders cancelled after 30 minutes.')
+
+    return redirect('customer_my_orders')
+
+
+@login_required(login_url='login')
+@user_passes_test(check_role_vendor)
+def mark_order_failed(request, order_number):
+    """
+    Scenario 2: Delivery failed - Full Refund.
+    Logic:
+    - Vendor or Admin marks the order as failed.
+    - Customer gets a full refund regardless of time.
+    """
+    # Vendors can only mark orders that contain their items
+    from vendor.models import Vendor
+    vendor = Vendor.objects.get(user=request.user)
+    order = get_object_or_404(Order, order_number=order_number, vendors__in=[vendor])
+
+    if order.status != 'Failure':
+        order.status = 'Failure'
+        order.save()
+
+        if order.payment:
+            payment = order.payment
+            payment.refund_status = 'Full Refund'
+            payment.refund_amount = payment.amount
+            payment.save()
+            
+        messages.success(request, 'Order marked as Delivery Failed. Full refund initiated for the customer.')
+    else:
+        messages.info(request, 'Order is already marked as Failed.')
+
+    return redirect('vendor_my_orders')

@@ -103,6 +103,18 @@
                                             <span>Rs. {{ grand_total }}</span>
                                         </li>
 
+                                        <li class="d-flex justify-content-between">
+                                            <span>Order Status</span>
+                                            <span class="badge badge-info">{{ order.status }}</span>
+                                        </li>
+
+                                        {% if order.payment.refund_status != 'No Refund' %}
+                                        <li class="d-flex justify-content-between text-success font-weight-bold">
+                                            <span>Refund Status</span>
+                                            <span>{{ order.payment.refund_status }}</span>
+                                        </li>
+                                        {% endif %}
+
                                     </ul>
                                 </div>
                             </div>
@@ -121,6 +133,31 @@
                             </div>
 
                         </div>
+
+                        {% if order.status != 'Completed' and order.status != 'Failure' and order.status != 'Cancelled' %}
+                        <div class="bg-white p-4 mb-5 text-center">
+                            <h4>Delivery Issues?</h4>
+                            <p class="text-muted">If you cannot deliver this order, mark it as failed to notify the customer and initiate a refund.</p>
+                            <a href="{% url 'mark_order_failed' order.order_number %}" class="btn btn-warning" onclick="return confirm('Are you sure you want to mark this delivery as failed? This will trigger a full refund.')">Mark as Delivery Failed</a>
+                        </div>
+                        {% endif %}
+
+                        {% if order.status == 'Failure' %}
+                        <div class="bg-white p-4 mb-5 text-center border border-warning">
+                            <h4 class="text-warning">Delivery Failed</h4>
+                            <p>This order has been marked as a delivery failure. A full refund has been initiated.</p>
+                        </div>
+                        {% endif %}
+
+                        {% if order.status == 'Cancelled' %}
+                        <div class="bg-white p-4 mb-5 text-center border border-danger">
+                            <h4 class="text-danger">Order Cancelled</h4>
+                            {% if order.cancel_reason %}
+                            <p><b>Reason:</b> {{ order.cancel_reason }}</p>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
                     </div>
                 </div>
                 <!-- END RIGHT SIDE -->
